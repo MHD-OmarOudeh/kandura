@@ -8,7 +8,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Design extends Model
 {
-    use HasTranslations, SoftDeletes; 
+    use HasTranslations, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -99,5 +99,14 @@ class Design extends Model
     public function scopeWithRelations($query)
     {
         return $query->with(['user:id,name', 'images', 'measurements', 'designOptions']);
+    }
+
+    // في app/Models/Design.php - ضيف هالعلاقة:
+
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class, 'design_order')
+            ->withPivot(['quantity', 'price', 'subtotal'])
+            ->withTimestamps();
     }
 }

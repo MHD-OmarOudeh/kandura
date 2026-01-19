@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Address;
 
 class User extends Authenticatable
 {
@@ -59,7 +60,29 @@ class User extends Authenticatable
     {
         return $this->hasMany(Address::class);
     }
+    public function coupons()
+{
+    return $this->belongsToMany(Coupon::class, 'coupon_user')
+        ->withPivot(['order_id', 'used_at']);
+}
+    /**
+ * User has one wallet
+ */
+public function wallet()
+{
+    return $this->hasOne(Wallet::class);
+}
 
+/**
+ * Get or create user wallet
+ */
+public function getOrCreateWallet(): Wallet
+{
+    return $this->wallet ?? Wallet::create([
+        'user_id' => $this->id,
+        'balance' => 0,
+    ]);
+}
     /**
      * Boot method
      */
@@ -74,6 +97,6 @@ class User extends Authenticatable
         });
     }
 
-    
+
 
 }

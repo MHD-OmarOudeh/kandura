@@ -617,6 +617,45 @@
                 </div>
             </div>
             @endcan
+            @can('manage orders')
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <h3>Total Orders</h3>
+                        <div class="number">{{ \App\Models\Order::count() }}</div>
+                        <div class="description">Customer orders</div>
+                    </div>
+                    <div class="stat-icon">📦</div>
+                </div>
+            </div>
+            @endcan
+
+            @can('manage coupons')
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <h3>Active Coupons</h3>
+                        <div class="number">{{ \App\Models\Coupon::where('is_active', true)->count() }}</div>
+                        <div class="description">Discount coupons</div>
+                    </div>
+                    <div class="stat-icon">🎟️</div>
+                </div>
+            </div>
+            @endcan
+            @can('manage wallet')
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <h3>Total Wallet Balance</h3>
+                        <div class="number">{{ number_format(\App\Models\Wallet::sum('balance'), 2) }}</div>
+                        <div class="description">SAR</div>
+                    </div>
+                    <div class="stat-icon">💰</div>
+                </div>
+            </div>
+            @endcan
+
+
 
             <div class="stat-card">
                 <div class="stat-header">
@@ -656,8 +695,31 @@
                 <p>Browse and manage delivery addresses</p>
             </a>
             @endcan
+            <!-- In Quick Actions Grid - Add after existing action cards -->
+            @can('manage orders')
+            <a href="{{ route('dashboard.orders.index') }}" class="action-card">
+                <div class="action-icon">📦</div>
+                <h3>Orders Management</h3>
+                <p>View, track and manage customer orders</p>
+            </a>
+            @endcan
 
-            <a href="#" class="action-card">
+            @can('manage coupons')
+            <a href="{{ route('dashboard.coupons.index') }}" class="action-card">
+                <div class="action-icon">🎟️</div>
+                <h3>Coupons</h3>
+                <p>Create and manage discount coupons</p>
+            </a>
+            @endcan
+
+            @can('manage wallet')
+            <a href="{{ route('dashboard.wallet.index') }}" class="action-card">
+                <div class="action-icon">💰</div>
+                <h3>Wallet Management</h3>
+                <p>Manage user wallets and transactions</p>
+            </a>
+            @endcan
+            {{-- <a href="#" class="action-card">
                 <div class="action-icon">📊</div>
                 <h3>Reports</h3>
                 <p>Generate sales and design analytics reports</p>
@@ -667,13 +729,9 @@
                 <div class="action-icon">⚙️</div>
                 <h3>Settings</h3>
                 <p>Configure system settings and preferences</p>
-            </a>
+            </a> --}}
 
-            <a href="#" class="action-card">
-                <div class="action-icon">📦</div>
-                <h3>Orders</h3>
-                <p>Track and manage customer orders</p>
-            </a>
+
         </div>
 
         <!-- Recent Activity -->
@@ -721,9 +779,35 @@
                     }
                 }
 
-                // Sort by time and take latest 8
-                $recentActivities = $recentActivities->sortByDesc('sort')->take(8);
+                // Add recent orders
+                if (auth()->user()->can('manage orders')) {
+                    $recentOrders = \App\Models\Order::with('user')->latest()->take(3)->get();
+                    foreach ($recentOrders as $order) {
+                        $recentActivities->push([
+                            'icon' => '📦',
+                            'text' => $order->user->name . ' placed order ' . $order->order_number,
+                            'time' => $order->created_at->diffForHumans(),
+                            'sort' => $order->created_at
+                        ]);
+                    }
+                }
+
+                // Add recent coupons
+                if (auth()->user()->can('manage coupons')) {
+                    $recentCoupons = \App\Models\Coupon::latest()->take(2)->get();
+                    foreach ($recentCoupons as $coupon) {
+                        $recentActivities->push([
+                            'icon' => '🎟️',
+                            'text' => 'New coupon created: ' . $coupon->code,
+                            'time' => $coupon->created_at->diffForHumans(),
+                            'sort' => $coupon->created_at
+                        ]);
+                    }
+                }
             @endphp
+
+
+
 
             @if($recentActivities->count() > 0)
             <ul class="activity-list">
